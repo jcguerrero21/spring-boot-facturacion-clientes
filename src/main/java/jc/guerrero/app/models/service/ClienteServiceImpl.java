@@ -26,7 +26,7 @@ public class ClienteServiceImpl implements IClienteService {
 
 	@Autowired
 	private IFacturaDao facturaDao;
-	
+
 	@Override
 	@Transactional(readOnly = true) // con esta anotación marcamos este método transacional y le marcamos solo de lectura porque es solo para obtener y leer datos si ponemos readOnly
 	public List<Cliente> findAll() {
@@ -48,13 +48,19 @@ public class ClienteServiceImpl implements IClienteService {
 	@Override
 	@Transactional(readOnly = true)
 	public Cliente findOne(Long id) {
-		return clienteDao.findOne(id);
+		return clienteDao.findById(id).orElse(null);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Cliente fetchByIdWithFacturas(Long id) {
+		return clienteDao.fetchByIdWithFacturas(id);
 	}
 
 	@Override
 	@Transactional
 	public void delete(Long id) {
-		clienteDao.delete(id);
+		clienteDao.deleteById(id);
 	}
 
 	@Override
@@ -72,19 +78,19 @@ public class ClienteServiceImpl implements IClienteService {
 	@Override
 	@Transactional(readOnly = true)
 	public Producto findProductoById(Long id) {
-		return productoDao.findOne(id);
+		return productoDao.findById(id).orElse(null);
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	public Factura findFacturaById(Long id) {
-		return facturaDao.findOne(id);
+		return facturaDao.findById(id).orElse(null);
 	}
 
 	@Override
 	@Transactional
 	public void deleteFactura(Long id) {
-		facturaDao.delete(id);
+		facturaDao.deleteById(id);
 	}
 
 	@Override

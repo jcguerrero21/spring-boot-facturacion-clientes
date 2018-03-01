@@ -4,6 +4,10 @@ import java.util.Map;
 
 import javax.validation.Valid;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -31,11 +35,13 @@ import jc.guerrero.app.utilidades.paginator.PageRender;
 
 @Controller // Para indicar que esta clase es un controlador
 @SessionAttributes("cliente") // con esto coge todos los datos persistentes hasta el id, por lo tanto en el
-								// html no necesitariamos hacer un input hidden del id para nada
+// html no necesitariamos hacer un input hidden del id para nada
 public class ClienteController {
 
+	protected final Log logger = LogFactory.getLog(this.getClass());
+
 	@Autowired // Con esta anotación buscará por el proyecto la clase indicada para poder
-				// implementarla
+	// implementarla
 	// @Qualifier("ClienteDaoJPA") //Con está anotación indicamos el nombre del
 	// componente concreto por si tenemos más de uno(para JDBC, Hibernate, etc)
 	private IClienteService clienteService;
@@ -43,12 +49,24 @@ public class ClienteController {
 	@Autowired
 	private IUploadFileService uploadFileService;
 
-	@RequestMapping(value = "/listar", method = RequestMethod.GET)
-	public String listar(@RequestParam(name = "page", defaultValue = "0") int page, Model model) {
+	@RequestMapping(value = { "/listar", "/" }, method = RequestMethod.GET)
+	public String listar(@RequestParam(name = "page", defaultValue = "0") int page, Model model,
+						 Authentication authentication) {
 
-		// Pageable pageRequest = PageRequest.of(page, 4) Así sería con springBoot 2
+		if (authentication != null) {
+			logger.info("Hola usuario autenticado, tu username es: ".concat(authentication.getName()));
+		}
+
+//		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+//
+//		if(auth != null) {
+//			logger.info("Utilizando forma estática SecurityContextHolder.getContext().getAuthentication(): Hola usuario autenticado, tu username: ".concat(authentication.getName()));
+//		}
+
+		Pageable pageRequest = PageRequest.of(page, 4); // Así sería con springBoot 2
 		// (spring 5)
-		Pageable pageRequest = new PageRequest(page, 4);
+		// Pageable pageRequest = new PageRequest(page, 4); Así sería en springBoot
+		// 1.5.10 RELEASE
 
 		Page<Cliente> clientes = clienteService.findAll(pageRequest);
 
@@ -70,7 +88,7 @@ public class ClienteController {
 
 	@RequestMapping(value = "/form", method = RequestMethod.POST)
 	public String guardar(@Valid Cliente cliente, BindingResult result, Model model,
-			@RequestParam("file") MultipartFile foto, RedirectAttributes flash, SessionStatus status) {
+						  @RequestParam("file") MultipartFile foto, RedirectAttributes flash, SessionStatus status) {
 
 		String mensajeFlash = (cliente.getId() != null) ? "Cliente editado con éxito" : "Cliente creado con éxito";
 
@@ -83,10 +101,10 @@ public class ClienteController {
 
 			if (cliente.getId() != null && cliente.getId() > 0 && cliente.getFoto() != null
 					&& cliente.getFoto().length() > 0) {
-				
+
 				uploadFileService.delete(cliente.getFoto());
 			}
-			
+
 			String uniqueFilename = uploadFileService.copy(foto);
 
 			flash.addFlashAttribute("info", "Has subido correctamente '" + uniqueFilename + "'");
@@ -96,7 +114,7 @@ public class ClienteController {
 
 		clienteService.save(cliente);
 		status.setComplete(); // con esto terminamos la sesión del cliente y borramos todos sus datos de la
-								// sesión
+		// sesión
 		flash.addFlashAttribute("success", mensajeFlash);
 		return "redirect:listar";
 	}
@@ -129,8 +147,8 @@ public class ClienteController {
 
 			clienteService.delete(id);
 			flash.addFlashAttribute("success", "¡Cliente borrado con éxito!");
-			
-			if(uploadFileService.delete(cliente.getFoto())) {
+
+			if (uploadFileService.delete(cliente.getFoto())) {
 				flash.addFlashAttribute("info", "Foto " + cliente.getFoto() + " eliminada con exito");
 			}
 
@@ -141,7 +159,7 @@ public class ClienteController {
 	@GetMapping(value = "ver/{id}")
 	public String ver(@PathVariable(value = "id") Long id, Map<String, Object> model, RedirectAttributes flash) {
 
-		Cliente cliente = clienteService.findOne(id);
+		Cliente cliente = clienteService.fetchByIdWithFacturas(id);
 		if (cliente == null) {
 			flash.addFlashAttribute("error", "El cliente no existe en la base de datos");
 			return "redirect:/listar";

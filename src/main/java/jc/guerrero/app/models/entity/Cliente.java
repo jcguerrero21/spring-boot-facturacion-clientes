@@ -18,24 +18,24 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.validation.constraints.NotNull;
 
-import org.hibernate.validator.constraints.Email;
-import org.hibernate.validator.constraints.NotEmpty;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotEmpty;
 import org.springframework.format.annotation.DateTimeFormat;
 
 @Entity
 @Table(name = "clientes") // esta anotación no es necesaria ponerla si la tabla se va a llamar igual que
-							// nuestra clase
+// nuestra clase
 public class Cliente implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
 	@Id // aquí le indicamos que es una clave primaria
 	@GeneratedValue(strategy = GenerationType.IDENTITY) // con esta anotación le indicamos que es una tabla
-														// autoincremental
+	// autoincremental
 	private Long id;
 
 	@NotEmpty // con está anotación le decimos que no pueda ser vacío el campo (que venga un
-				// string con length mayor de 0)
+	// string con length mayor de 0)
 	private String nombre;
 
 	@NotEmpty
@@ -47,10 +47,10 @@ public class Cliente implements Serializable {
 
 	@NotNull // con está anotación validamos que el obejto no sea null
 	@Column(name = "create_at") // la anotación column solamente necesitamos ponerla si vamos a hacer camel case
-								// si el campo de la tabla se va a llamar extamente igual que en la clase, no
-								// sería necesario
+	// si el campo de la tabla se va a llamar extamente igual que en la clase, no
+	// sería necesario
 	@Temporal(TemporalType.DATE) // de esta forma lo convierte al formato propio del moto de nuestra base de
-									// datos
+	// datos
 	@DateTimeFormat(pattern = "dd-MM-yyyy") // Con está notación podemos especificar el formato de la fecha
 	private Date createAt;
 
@@ -127,7 +127,7 @@ public class Cliente implements Serializable {
 	public String toString() {
 		return nombre + " " + apellido;
 	}
-	
-	
+
+
 
 }
