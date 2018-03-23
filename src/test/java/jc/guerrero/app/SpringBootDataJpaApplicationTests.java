@@ -1,4 +1,4 @@
-package jc.guerrero.app;
+package jc.guerrero.app;/*
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -13,4 +13,4 @@ public class SpringBootDataJpaApplicationTests {
 	public void contextLoads() {
 	}
 
-}
+}*/
