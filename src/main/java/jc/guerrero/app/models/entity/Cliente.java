@@ -20,6 +20,10 @@ import javax.validation.constraints.NotNull;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import org.springframework.format.annotation.DateTimeFormat;
 
 @Entity
@@ -52,9 +56,11 @@ public class Cliente implements Serializable {
 	@Temporal(TemporalType.DATE) // de esta forma lo convierte al formato propio del moto de nuestra base de
 	// datos
 	@DateTimeFormat(pattern = "dd-MM-yyyy") // Con está notación podemos especificar el formato de la fecha
+	@JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
 	private Date createAt;
 
 	@OneToMany(mappedBy="cliente", fetch = FetchType.LAZY, cascade=CascadeType.ALL, orphanRemoval=true)
+	@JsonManagedReference
 	private List<Factura> facturas;
 
 	private String foto;
