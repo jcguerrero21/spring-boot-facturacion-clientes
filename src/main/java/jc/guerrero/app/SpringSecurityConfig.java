@@ -1,6 +1,7 @@
 package jc.guerrero.app;
 
 import jc.guerrero.app.auth.filter.JWTAuthenticationFilter;
+import jc.guerrero.app.auth.filter.JWTAuthorizationFilter;
 import jc.guerrero.app.models.service.JpaUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -41,6 +42,7 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter{
                 .exceptionHandling().accessDeniedPage("/error_403")*/
                 .and()
                 .addFilter(new JWTAuthenticationFilter(authenticationManager()))
+                .addFilter(new JWTAuthorizationFilter(authenticationManager()))
                 .csrf().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
