@@ -1,65 +1,44 @@
 package jc.guerrero.app.auth.filter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import jc.guerrero.app.auth.SimpleGrantedAuthoritiesMixin;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.authentication.jaas.JaasAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import java.io.IOException;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
+
+import jc.guerrero.app.auth.service.JWTService;
+import jc.guerrero.app.auth.service.JWTServiceImpl;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+
 
 public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 
+    private JWTService jwtService;
 
-    public JWTAuthorizationFilter(AuthenticationManager authenticationManager) {
+    public JWTAuthorizationFilter(AuthenticationManager authenticationManager, JWTService jwtService) {
         super(authenticationManager);
+        this.jwtService = jwtService;
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-        String header = request.getHeader("Authorization");
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+            throws IOException, ServletException {
 
-        if(!requiresAuthentication(header)) {
+        String header = request.getHeader(JWTServiceImpl.HEADER_STRING);
+
+        if (!requiresAuthentication(header)) {
             chain.doFilter(request, response);
             return;
         }
 
-        boolean validoToken;
-        Claims token = null;
-
-        try {
-            Jwts.parser()
-                    .setSigningKey("Hola, es la -- clase secreta......?".getBytes())
-                    .parseClaimsJws(header.replace("Bearer ", "")).getBody();
-            validoToken = true;
-        } catch (JwtException | IllegalArgumentException e) {
-            validoToken = false;
-        }
-
         UsernamePasswordAuthenticationToken authentication = null;
 
-        if(validoToken) {
-            String username = token.getSubject();
-            Object roles = token.get("authorities");
-
-            Collection<? extends GrantedAuthority> authorities = Arrays.asList(new ObjectMapper()
-                    .addMixIn(SimpleGrantedAuthority.class, SimpleGrantedAuthoritiesMixin.class)
-                    .readValue(roles.toString().getBytes(), SimpleGrantedAuthority[].class));
-
-            authentication = new JaasAuthenticationToken(username, null, authorities);
+        if(jwtService.validate(header)) {
+            authentication = new UsernamePasswordAuthenticationToken(jwtService.getUsername(header), null, jwtService.getRoles(header));
         }
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -69,10 +48,11 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 
     protected boolean requiresAuthentication(String header) {
 
-        if (header == null || !header.startsWith("Bearer ")){
+        if (header == null || !header.startsWith(JWTServiceImpl.TOKEN_PREFIX)) {
             return false;
         }
         return true;
-
     }
+
 }
+
